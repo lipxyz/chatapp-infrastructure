@@ -1,4 +1,4 @@
-# chatapp-infrastructure — Infrastructure as Code
+# chatapp-infrastructure
 
 > IaC repository for deploying **SlurmTalks** (a Twitter-like social platform) to a Kubernetes cluster.
 > Covers application containerisation, Kubernetes orchestration via Helm, and Prometheus metrics scraping.
