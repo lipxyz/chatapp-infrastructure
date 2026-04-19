@@ -1,0 +1,154 @@
+name: backend
+replicas: 1
+image:
+  repository: ""
+  tag: ""
+  pullPolicy: IfNotPresent
+strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxSurge: 1
+    maxUnavailable: 1
+ports:
+  - containerPort: 8080
+nodeSelector:
+  kubernetes.io/hostname: node-2.s023943.slurm.io
+affinity:
+  matchExpressions:
+    - key: kubernetes.io/hostname
+      operator: In
+      values:
+        - node-2.s023943.slurm.io
+restartPolicy: Always
+
+pod:
+  serviceAccountName: gitlab-runner
+  imagePullSecrets:
+    - name: gitlab-registry
+  prometheus:
+    scrape: true
+    path: /metrics
+    port: "8080"
+
+service:
+  type: ClusterIP
+  ports:
+    - port: 8080
+      targetPort: 8080
+
+env:
+  # ConfigMap variables
+  - name: POSTGRES_HOST
+    valueFrom:
+      configMapKeyRef:
+        name: slurmtalks-config
+        key: POSTGRES_HOST
+  - name: POSTGRES_PORT
+    valueFrom:
+      configMapKeyRef:
+        name: slurmtalks-config
+        key: POSTGRES_PORT
+  - name: MIGRATE_IN_CODE
+    valueFrom:
+      configMapKeyRef:
+        name: slurmtalks-config
+        key: MIGRATE_IN_CODE
+  - name: REDIS_ADDR
+    valueFrom:
+      configMapKeyRef:
+        name: slurmtalks-config
+        key: REDIS_ADDR
+  - name: REDIS_DB
+    valueFrom:
+      configMapKeyRef:
+        name: slurmtalks-config
+        key: REDIS_DB
+  - name: SIMULATED_METRICS
+    valueFrom:
+      configMapKeyRef:
+        name: slurmtalks-config
+        key: SIMULATED_METRICS
+  - name: SIMULATED_METRICS_INTERVAL
+    valueFrom:
+      configMapKeyRef:
+        name: slurmtalks-config
+        key: SIMULATED_METRICS_INTERVAL
+  - name: SIMULATED_METRICS_TWEETS
+    valueFrom:
+      configMapKeyRef:
+        name: slurmtalks-config
+        key: SIMULATED_METRICS_TWEETS
+  - name: SIMULATED_METRICS_USERS
+    valueFrom:
+      configMapKeyRef:
+        name: slurmtalks-config
+        key: SIMULATED_METRICS_USERS
+
+  # Secret variables
+  - name: POSTGRES_DB
+    valueFrom:
+      secretKeyRef:
+        name: backend-secret
+        key: POSTGRES_DB
+  - name: POSTGRES_USER
+    valueFrom:
+      secretKeyRef:
+        name: backend-secret
+        key: POSTGRES_USER
+  - name: POSTGRES_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: backend-secret
+        key: POSTGRES_PASSWORD
+  - name: JWT_SECRET_KEY
+    valueFrom:
+      secretKeyRef:
+        name: backend-secret
+        key: JWT_SECRET_KEY
+  - name: REDIS_USER
+    valueFrom:
+      secretKeyRef:
+        name: backend-secret
+        key: REDIS_USER
+  - name: REDIS_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: backend-secret
+        key: REDIS_PASSWORD
+
+# HPA
+hpa:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 3
+  cpuTarget: 10
+
+# Resource requests/limits
+resources:
+  requests:
+    cpu: "250m"
+    memory: "256Mi"
+  limits:
+    cpu: "500m"
+    memory: "512Mi"
+
+livenessProbe:
+  httpGet:
+    path: /healthz
+    port: 8080
+  initialDelaySeconds: 15
+  periodSeconds: 20
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /readyz
+    port: 8080
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  timeoutSeconds: 3
+  failureThreshold: 3
+
+volumeMounts: []
+volumes: []

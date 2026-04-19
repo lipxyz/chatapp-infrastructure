@@ -1,0 +1,33 @@
+ingress:
+  enabled: true
+  className: nginx
+  hostname: "slurm-talks-stage.s023943.edu.slurm.io"
+  path: /
+  servicePort: 80
+
+backend:
+  postgres:
+    host: "slurm-postgres-postgresql.slurmtalks.svc.cluster.local"
+    port: "5432"
+    migrateInCode: "true"
+  redis:
+    addr: "slurm-redis-master.slurmtalks.svc.cluster.local:6379"
+    db: "0"
+  simulatedMetrics:
+    enabled: true
+    interval: "1m"
+    tweets: 10
+    users: 10
+
+frontend:
+  apiUrl: "http://slurm-talks-stage.s023943.edu.slurm.io:8080"
+
+secret:
+  redis:
+    user: "default"
+    password: "qzUBAdeV2f"
+  postgres:
+    db: "postgres"
+    user: "postgres"
+    password: "11Test11"
+  jwtSecretKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiczAyMzk0MyIsInJvbGUiOiJkZXZvcHMtY3MtcHJvamVjdCIsImV4cCI6MTc4ODc5NDc3NH0.5yU3FuMWC4aUSBFyXzwM3O_hTrppGP8msvIQj42bD_A"

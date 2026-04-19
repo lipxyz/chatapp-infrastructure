@@ -1,0 +1,50 @@
+{{- $root := . }}
+
+{{- $frontend := dict 
+    "name" "frontend" 
+    "kind" "Deployment" 
+    "apiVersion" "apps/v1" 
+    "replicas" .Values.replicas
+    "strategy" .Values.strategy
+    "image" .Values.image
+    "ports" .Values.ports
+    "envFromConfigMap" .Values.envFromConfigMap
+    "resources" .Values.resources
+    "nodeSelector" .Values.nodeSelector
+    "affinity" .Values.affinity
+    "restartPolicy" .Values.restartPolicy
+    "livenessProbe" .Values.livenessProbe
+    "readinessProbe" .Values.readinessProbe
+-}}
+
+{{- with .Values.pod }}
+{{- $frontend = merge $frontend (dict
+    "serviceAccountName" .serviceAccountName
+    "imagePullSecrets"  .imagePullSecrets
+) }}
+{{- end }}
+
+{{- with .Values.envFromSecrets }}
+{{- $frontend = merge $frontend (dict "envFromSecrets" .) }}
+{{- end }}
+
+{{- with .Values.volumeMounts }}
+{{- $frontend = merge $frontend (dict "volumeMounts" .) }}
+{{- end }}
+
+{{- with .Values.volumes }}
+{{- $frontend = merge $frontend (dict "volumes" .) }}
+{{- end }}
+
+{{ include "manifest.template" (dict "root" $root "config" $frontend) }}
+
+---
+{{- $service := dict
+    "name" "frontend"
+    "kind" "Service"
+    "apiVersion" "v1"
+    "ports" .Values.service.ports
+    "type" .Values.service.type
+-}}
+
+{{ include "manifest.template" (dict "root" $root "config" $service) }}
