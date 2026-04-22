@@ -116,5 +116,5 @@ Default hostname: `slurm-talks-stage.s023943.edu.slurm.io`
 
 | Component | CPU Request | CPU Limit | Memory Request | Memory Limit | HPA |
 |-----------|-------------|-----------|----------------|--------------|-----|
-| Backend | 250m | 500m | 256Mi | 512Mi | 1–3 replicas (CPU 10%) |
+| Backend | 250m | 500m | 256Mi | 512Mi | 1–3 replicas (CPU 70%) |
 | Frontend | 100m | 250m | 128Mi | 256Mi | — |
