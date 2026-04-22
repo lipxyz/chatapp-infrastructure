@@ -118,23 +118,3 @@ Default hostname: `slurm-talks-stage.s023943.edu.slurm.io`
 |-----------|-------------|-----------|----------------|--------------|-----|
 | Backend | 250m | 500m | 256Mi | 512Mi | 1–3 replicas (CPU 10%) |
 | Frontend | 100m | 250m | 128Mi | 256Mi | — |
-
-## Deployment
-
-```bash
-# 1. Build and push Docker images
-docker build -t <registry>/frontend:1.0.0 ./frontend-service
-docker build -t <registry>/backend:1.0.0  ./backend-service
-docker push <registry>/frontend:1.0.0
-docker push <registry>/backend:1.0.0
-
-# 2. Update image tags in values.local.yaml, then deploy
-helm upgrade --install slurmtalks ./helm/slurmtalks \
-  -f helm/slurmtalks/values.local.yaml \
-  --namespace slurmtalks \
-  --create-namespace
-
-# 3. Verify rollout
-kubectl rollout status deployment/frontend -n slurmtalks
-kubectl rollout status deployment/backend  -n slurmtalks
-```
