@@ -70,7 +70,7 @@ lint-frontend:
     - npm run lint
 
 # --------------------------
-# Build stage (Kaniko) +
+# Build stage (Kaniko)
 # -------------------------
 build-backend:
   <<: *build_def
@@ -113,7 +113,7 @@ persistence:
         --create-namespace \
         -f longhorn/values.yml
 
-    # Bitnami Redis
+    # Redis
     - |
       helm upgrade --install slurm-redis oci://registry-1.docker.io/bitnamicharts/redis \
         --namespace "$SLURMTALKS_NAMESPACE" \
@@ -124,7 +124,7 @@ persistence:
         --set master.persistence.storageClass=longhorn \
         --set nodeSelector."kubernetes\.io/hostname"=node-2.s023943.slurm.io
 
-    # Bitnami Postgres
+    # Postgres
     - |
       helm upgrade --install slurm-postgres oci://registry-1.docker.io/bitnamicharts/postgresql \
         --namespace "$SLURMTALKS_NAMESPACE" \
@@ -180,146 +180,6 @@ deploy:
         --wait \
         --timeout 15m \
         --atomic
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "main"'
-      when: always
-    - when: never
-
-# -------------------------
-# Lint -- stage
-# --------------------------
-lint-backend:
-  stage: lint
-  image: golang:1.24
-  tags:
-    - k8s
-  script:
-    - cd backend-service
-    - go fmt ./...
-    - go vet ./...
-
-lint-frontend:
-  stage: lint
-  image: node:20
-  tags:
-    - k8s
-  script:
-    - cd frontend-service
-    - npm install
-    - npm run lint
-
-# -------------------------
-# Build stage (Kaniko) +
-# -------------------------
-build-backend:
-  <<: *build_def
-  variables:
-    SERVICE_NAME: backend-service
-    PROJECT_DIR: ${CI_PROJECT_DIR}/backend-service
-
-build-frontend:
-  <<: *build_def
-  variables:
-    SERVICE_NAME: frontend-service
-    PROJECT_DIR: ${CI_PROJECT_DIR}/frontend-service
-
-# ----------------------------------------------
-# Persistence stage: Longhorn + Redis + Postgres
-# ----------------------------------------------
-persistence:
-  stage: persistence
-  image:
-    name: dtzar/helm-kubectl:3.9.4
-    entrypoint: [""]
-  tags:
-    - k8s
-
-  before_script:
-    - mkdir -p ~/.kube
-    - echo "$KUBE_CONFIG_DATA" | base64 -d > ~/.kube/config
-    - chmod 600 ~/.kube/config
-    - cat ~/.kube/config
-    - kubectl get namespace "${SLURMTALKS_NAMESPACE}" >/dev/null 2>&1 || kubectl create namespace "${SLURMTALKS_NAMESPACE}"
-    - kubectl get ns
-
-  script:
-    # Longhorn
-    - |
-      helm repo add longhorn https://charts.longhorn.io
-      helm repo update
-      helm upgrade --install longhorn longhorn/longhorn \
-        --namespace longhorn-system \
-        --create-namespace \
-        -f longhorn/values.yml
-
-    # Bitnami Redis
-    - |
-      helm upgrade --install slurm-redis oci://registry-1.docker.io/bitnamicharts/redis \
-        --namespace "$SLURMTALKS_NAMESPACE" \
-        --set architecture=standalone \
-        --set auth.enabled=false \
-        --set master.persistence.enabled=true \
-        --set master.persistence.size=500Mi \
-        --set master.persistence.storageClass=longhorn \
-        --set nodeSelector."kubernetes\.io/hostname"=node-2.s023943.slurm.io
-
-    # Bitnami Postgres
-    - |
-      helm upgrade --install slurm-postgres oci://registry-1.docker.io/bitnamicharts/postgresql \
-        --namespace "$SLURMTALKS_NAMESPACE" \
-        --set auth.postgresPassword="$POSTGRES_PASSWORD" \
-        --set primary.persistence.enabled=true \
-        --set primary.persistence.size=2Gi \
-        --set primary.persistence.storageClass=longhorn \
-        --set nodeSelector."kubernetes\.io/hostname"=node-2.s023943.slurm.io
-
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "main"'
-      when: always
-    - when: never
-
-
-# -------------------------
-# Deploy stage
-# -------------------------
-deploy:
-  stage: deploy
-  image: alpine/k8s:1.31.13
-  before_script:
-    - mkdir -p ~/.kube
-    - echo "$KUBE_CONFIG_DATA" | base64 -d > ~/.kube/config
-    - chmod 600 ~/.kube/config
-    - kubectl delete secret gitlab-registry -n "$SLURMTALKS_NAMESPACE" --ignore-not-found
-    - |
-      kubectl create secret docker-registry gitlab-registry \
-        --docker-server=$CI_REGISTRY \
-        --docker-username=$CI_REGISTRY_USER \
-        --docker-password=$CI_REGISTRY_PASSWORD \
-        --namespace $SLURMTALKS_NAMESPACE
-    - |
-      kubectl get sa gitlab-runner -n $SLURMTALKS_NAMESPACE || \
-      kubectl create sa gitlab-runner -n $SLURMTALKS_NAMESPACE
-      kubectl patch sa gitlab-runner \
-        -n $SLURMTALKS_NAMESPACE \
-        -p '{"imagePullSecrets":[{"name":"gitlab-registry"}]}'
-
-  script:
-    - |
-      helm upgrade --install slurmtalks ./helm \
-        --namespace "$SLURMTALKS_NAMESPACE" \
-        --create-namespace \
-        --set backend.image.repository="${CI_REGISTRY_IMAGE}/backend-service" \
-        --set backend.image.tag="$CI_COMMIT_SHA" \
-        --set backend.image.pullPolicy="IfNotPresent" \
-        --set backend.serviceAccount.name="gitlab-runner" \
-        --set frontend.image.repository="${CI_REGISTRY_IMAGE}/frontend-service" \
-        --set frontend.image.tag="$CI_COMMIT_SHA" \
-        --set frontend.image.pullPolicy="IfNotPresent" \
-        --set frontend.serviceAccount.name="gitlab-runner" \
-        --wait \
-        --timeout 15m \
-        --atomic
-        
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
       when: always
