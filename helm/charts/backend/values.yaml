@@ -121,7 +121,7 @@ hpa:
   enabled: true
   minReplicas: 1
   maxReplicas: 3
-  cpuTarget: 10
+  cpuTarget: 70
 
 # Resource requests/limits
 resources:
