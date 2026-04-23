@@ -1,0 +1,41 @@
+# macOS
+.DS_Store
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Helm packaging / generated artifacts
+*.tgz
+charts/
+dist/
+packages/
+release/
+tmp/
+tmp-*/
+
+# Local chart repo / dependency outputs
+chart-repo/
+chart_repo/
+requirements.lock
+
+# Kubernetes / local dev overrides
+values.local.yaml
+values.local.yml
+*.secret.yaml
+*.secret.yml
+
+# Logs
+*.log
+
+# Optional: Helm docs / generated manifests
+docs/
+manifests/
+rendered/
+
+# OS junk
+Thumbs.db
+desktop.ini
