@@ -1,4 +1,10 @@
+# secrets
 .claude/
+.env
+*.tfvars
+*.pem
+*.key
+
 # macOS
 .DS_Store
 
